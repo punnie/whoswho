@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Who's who</title>
+    <meta content="{{current-user|json}}" id="current-user" />
+    <script>
+     var currentUser = JSON.parse(document.getElementById('current-user').content);
+    </script>
+  </head>
+  <body>
+    <div id="navbar"></div>
+    <div id="app"></div>
+
+    <!-- scripts and styles -->
+    {% style "/assets/bootstrap/css/bootstrap.min.css" %}
+    {% style "/assets/font-awesome/css/font-awesome.min.css" %}
+    {% style "/css/screen.css" %}
+
+    <script type="text/javascript">
+     var context = "{{servlet-context}}";
+     var csrfToken = "{{csrf-token}}";
+    </script>
+
+    {% script "/js/app.js" %}
+  </body>
+</html>
