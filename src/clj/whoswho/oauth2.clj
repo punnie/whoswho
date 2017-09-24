@@ -54,15 +54,13 @@
 (defn state-mismatch-handler [_]
   {:status 400, :headers {}, :body "State mismatch"})
 
-(defn- make-redirect-handler [{:keys [id landing-uri response-data-function]
-                               :or   {response-data-function identity}
-                               :as   profile}]
+(defn- make-redirect-handler [{:keys [id landing-uri] :as profile} data-callback]
   (let [error-handler (:state-mismatch-handler profile state-mismatch-handler)]
     (fn [{:keys [session] :or {session {}} :as request}]
       (if (state-matches? request)
         (let [access-token-get-result (get-access-token profile request)
-              access-token            (format-access-token access-token-get-result)]
-          (response-data-function (access-token-get-result :body))
+              access-token            (format-access-token access-token-get-result)
+              _                       (data-callback (access-token-get-result :body))]
           (-> (resp/redirect landing-uri)
               (assoc :session (-> session
                                   (assoc-in [::access-tokens id] access-token)
@@ -74,7 +72,7 @@
     (assoc request :oauth2/access-tokens tokens)
     request))
 
-(defn wrap-oauth2 [handler profiles]
+(defn wrap-oauth2 [handler profiles {:keys [data-callback] :as options :or {data-callback identity}}]
   (let [profiles  (for [[k v] profiles] (assoc v :id k))
         launches  (into {} (map (juxt :launch-uri identity)) profiles)
         redirects (into {} (map (juxt :redirect-uri identity)) profiles)]
@@ -82,5 +80,5 @@
       (if-let [profile (launches uri)]
         ((make-launch-handler profile) request)
         (if-let [profile (redirects uri)]
-          ((make-redirect-handler profile) request)
+          ((make-redirect-handler profile data-callback) request)
           (handler (assoc-access-tokens request)))))))

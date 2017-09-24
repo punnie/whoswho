@@ -37,17 +37,26 @@
     [:div.col-md-12
      [:img {:src (str js/context "/img/warning_clojure.png")}]]]])
 
+(defn team-component []
+  (fn []
+    (if-let [team (get-in @db [:team-members])]
+      [:div (for [member team]
+              [:img {:src (get-in member [:profile :image_512])}])]
+      [:p [:a {:href "/oauth2/slack/team"} "Add your team"]])))
+
 (defn home-page []
   (fn []
-    (let [current-user (get-in @db [:current-user :token])]
+    (let [current-user      (get-in @db [:current-user])
+          current-user-name (get-in current-user [:name])]
       [:div.container
-       (when-let [docs (session/get :docs)]
          [:div.row>div.col-sm-12
           [:div
            (if current-user
-             [:p "Hello " current-user "! "
-              [:a {:href "/logout"} "Logout"]]
-             [:a {:href "/oauth2/slack"} "Sign in with Slack"])]])])))
+             [:div
+              [:p "Welcome " current-user-name "! "
+               [:a {:href "/logout"} "Logout"]]
+              [team-component]]
+             [:a {:href "/oauth2/slack"} "Sign in with Slack"])]]])))
 
 (def pages
   {:home #'home-page
@@ -79,13 +88,17 @@
 
 ;; -------------------------
 ;; Initialize app
-(defn load-database []
+(defn load-database! []
   (swap! db assoc-in [:current-user] (-> js/window
                                          (aget "currentUser")
+                                         (js->clj-kw)))
+  (swap! db assoc-in [:current-team] (-> js/window
+                                         (aget "currentTeam")
                                          (js->clj-kw))))
 
-(defn fetch-docs! []
-  (GET "/docs" {:handler #(session/put! :docs %)}))
+(defn fetch-team-members! []
+  (GET "/api/team/members.json" {:handler #(swap! db assoc-in [:team-members] %)
+                                 :error-handler   #(swap! db assoc-in [:team-members] nil)}))
 
 (defn mount-components []
   (r/render [#'navbar] (.getElementById js/document "navbar"))
@@ -93,7 +106,7 @@
 
 (defn init! []
   (load-interceptors!)
-  (load-database)
-  (fetch-docs!)
+  (load-database!)
+  (fetch-team-members!)
   (hook-browser-navigation!)
   (mount-components))

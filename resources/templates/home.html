@@ -8,6 +8,10 @@
     <script>
      var currentUser = JSON.parse(document.getElementById('current-user').content);
     </script>
+    <meta content="{{current-team|json}}" id="current-team" />
+    <script>
+     var currentTeam = JSON.parse(document.getElementById('current-team').content);
+    </script>
   </head>
   <body>
     <div id="navbar"></div>

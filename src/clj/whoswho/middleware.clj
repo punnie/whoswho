@@ -10,7 +10,8 @@
             [muuntaja.format.transit :as transit-format]
             [muuntaja.middleware :refer [wrap-format wrap-params]]
             [whoswho.config :refer [env]]
-            [whoswho.oauth2-user :refer [handle-user-data-from-oauth2]]
+            [whoswho.oauth2-user :refer [handle-data-from-oauth2]]
+            [whoswho.db.core :refer [find-user-by-slack-token]]
             [ring-ttl-session.core :refer [ttl-memory-store]]
             [ring.middleware.defaults :refer [site-defaults wrap-defaults]]
             [ring.middleware.session.cookie :refer [cookie-store]]
@@ -97,23 +98,44 @@
 
 (defn wrap-oauth2 [handler]
   (oauth2/wrap-oauth2 handler
-                      {:slack
-                       {:authorize-uri          (env :authorize-uri)
-                        :access-token-uri       (env :access-token-uri)
-                        :client-id              (env :client-id)
-                        :client-secret          (env :client-secret)
-                        :scopes                 ["identity.basic"
-                                                 "identity.team"
-                                                 "identity.avatar"]
-                        :launch-uri             "/oauth2/slack"
-                        :redirect-uri           "/oauth2/slack/callback"
-                        :landing-uri            "/"
-                        :response-data-function handle-user-data-from-oauth2}}))
+                      {:slack-team
+                       {:authorize-uri    (env :authorize-uri)
+                        :access-token-uri (env :access-token-uri)
+                        :client-id        (env :client-id)
+                        :client-secret    (env :client-secret)
+                        :scopes           ["users:read"
+                                           "users.profile:read"
+                                           "team:read"]
+                        :launch-uri       "/oauth2/slack/team"
+                        :redirect-uri     "/oauth2/slack/callback"
+                        :landing-uri      "/"}
+
+                       :slack-user
+                       {:authorize-uri    (env :authorize-uri)
+                        :access-token-uri (env :access-token-uri)
+                        :client-id        (env :client-id)
+                        :client-secret    (env :client-secret)
+                        :scopes           ["identity.basic"
+                                           "identity.team"
+                                           "identity.avatar"]
+                        :launch-uri       "/oauth2/slack"
+                        :redirect-uri     "/oauth2/slack/callback"
+                        :landing-uri      "/"}}
+
+                      {:data-callback handle-data-from-oauth2}))
+
+(defn wrap-current-user [handler]
+  (fn [req]
+    (if-let [slack-token (get-in req [:session :whoswho.oauth2/access-tokens :slack-user :token])]
+      (if-let [user (find-user-by-slack-token slack-token)]
+        (handler (assoc-in req [:session :identity] (:_id user))))
+      (handler req))))
 
 (defn wrap-base [handler]
   (-> ((:middleware defaults) handler)
-      wrap-oauth2
       wrap-auth
+      wrap-current-user
+      wrap-oauth2
       wrap-webjars
       (wrap-defaults
         (-> site-defaults

@@ -5,6 +5,7 @@
 
   :dependencies [[buddy "1.3.0"]
                  [ch.qos.logback/logback-classic "1.1.7"]
+                 [clj-http "3.7.0"]
                  [clj-time "0.14.0"]
                  [cljs-ajax "0.7.2"]
                  [com.google.guava/guava "20.0"]
@@ -23,6 +24,7 @@
                  [org.clojure/clojurescript "1.9.908" :scope "provided"]
                  [org.clojure/tools.cli "0.3.5"]
                  [org.clojure/tools.logging "0.4.0"]
+                 [org.julienxx/clj-slack "0.5.5"]
                  [org.webjars.bower/tether "1.4.0"]
                  [org.webjars/bootstrap "4.0.0-alpha.5"]
                  [org.webjars/font-awesome "4.7.0"]

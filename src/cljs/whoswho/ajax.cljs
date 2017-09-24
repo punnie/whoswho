@@ -16,5 +16,3 @@
          conj
          (ajax/to-interceptor {:name "default headers"
                                :request default-headers})))
-
-
