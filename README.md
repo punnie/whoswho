@@ -1,8 +1,6 @@
-# whoswho
+# Who is who
 
-generated using Luminus version "2.9.11.89"
-
-FIXME
+Who is who is the exciting new game in town. Plug it into your slack and take the quizz on who are your slack buddies! Will you know them all?
 
 ## Prerequisites
 
@@ -18,4 +16,4 @@ To start a web server for the application, run:
 
 ## License
 
-Copyright © 2017 FIXME
+Copyright © 2017 MIT
